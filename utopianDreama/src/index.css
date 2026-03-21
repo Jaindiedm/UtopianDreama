@@ -2,12 +2,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap');
 
 :root {
-  --cream: #f5f0e8;
-  --charcoal: #1a1714;
-  --dark: #0e0c0a;
-  --gold: #c9a96e;
-  --muted: #8a7f72;
-  --border: rgba(201, 169, 110, 0.2);
+  --cream: #1a1714; /* Swapped for text */
+  --charcoal: #f5f0e8; /* Swapped for background */
+  --dark: #fcfbf7;    /* Primary light background */
+  --gold: #b38b4d;    /* Slightly darker gold for contrast */
+  --muted: #7a7065;
+  --border: rgba(179, 139, 77, 0.2);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,7 +16,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: 'Jost', sans-serif;
   background: var(--dark);
-  color: var(--cream);
+  color: #1a1714; /* Explicit dark text */
   overflow-x: hidden;
   cursor: none;
 }
@@ -34,7 +34,7 @@ body {
 
 .cursor-ring {
   width: 36px; height: 36px;
-  border: 1px solid rgba(201,169,110,0.5);
+  border: 1px solid rgba(179, 139, 77, 0.5);
   border-radius: 50%;
   position: fixed; top: 0; left: 0;
   pointer-events: none; z-index: 9998;
@@ -58,4 +58,9 @@ body {
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+@keyframes stripScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }

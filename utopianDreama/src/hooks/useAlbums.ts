@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Album, Photo } from '../types'
+import { MOCK_ALBUMS } from '../lib/mockData'
 
 export function useAlbums() {
     const [albums, setAlbums] = useState<Album[]>([])
@@ -14,7 +15,8 @@ export function useAlbums() {
                 .eq('is_published', true)
                 .order('sort_order')
                 .order('created_at', { ascending: false })
-            setAlbums(data || [])
+            // Fall back to mock data if database has no albums yet
+            setAlbums(data && data.length > 0 ? data : MOCK_ALBUMS)
             setLoading(false)
         }
         load()

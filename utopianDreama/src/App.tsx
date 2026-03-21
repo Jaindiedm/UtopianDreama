@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
-import HomePage from './pages/public/home'
+import HomePage from './pages/public/HomePage'
 import AlbumDetailPage from './pages/public/AlbumDetailPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
