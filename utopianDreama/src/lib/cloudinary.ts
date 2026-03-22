@@ -28,4 +28,8 @@ export async function uploadImage(
     xhr.send(fd)
   })
 }
-
+export function optimizeImage(url: string, width: number = 800): string {
+  if (!url) return ''
+  if (!url.includes('cloudinary.com')) return url
+  return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`)
+}

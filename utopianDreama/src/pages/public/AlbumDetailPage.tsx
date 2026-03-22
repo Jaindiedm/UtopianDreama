@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { ArrowLeft, X, ChevronLeft, ChevronRight, MapPin, Calendar, Camera } from 'lucide-react'
 import { useAlbum } from '../../hooks/useAlbums'
+import { optimizeImage } from '../../lib/cloudinary'
 import type { Photo } from '../../types'
 
 export default function AlbumDetailPage() {
@@ -286,7 +287,7 @@ function PhotoItem({ photo, index, onClick }: {
       }}
     >
       <img
-        src={photo.url}
+        src={optimizeImage(photo.url, 800)}
         alt={photo.caption || `Photo ${index + 1}`}
         loading="lazy"
         onLoad={() => setLoaded(true)}
