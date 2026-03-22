@@ -33,20 +33,21 @@ export default function Navbar() {
 
   return (
     <>
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        width: '100%',
-        zIndex: 100,
-        padding: scrolled ? '16px 60px' : '28px 60px',
-        background: scrolled ? 'rgba(252,251,247,0.95)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(8px)' : 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        transition: 'all 0.4s ease',
-        borderBottom: scrolled ? '1px solid var(--border)' : 'none',
-      }}>
+      <nav
+        className={`nav-inner${scrolled ? ' nav-scrolled' : ''}`}
+        style={{
+          position: 'fixed',
+          top: 0,
+          width: '100%',
+          zIndex: 100,
+          background: scrolled ? 'rgba(252,251,247,0.95)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(8px)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          transition: 'all 0.4s ease',
+          borderBottom: scrolled ? '1px solid var(--border)' : 'none',
+        }}>
 
         {/* Logo */}
         <Link to="/" style={{
@@ -61,7 +62,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Nav Links */}
-        <ul style={{
+        <ul className="desktop-links" style={{
           display: 'flex',
           gap: '40px',
           listStyle: 'none',
@@ -147,9 +148,10 @@ export default function Navbar() {
       )}
 
       <style>{`
+        .nav-scrolled { padding-top: 16px !important; padding-bottom: 16px !important; }
         @media (max-width: 768px) {
           .desktop-links { display: none !important; }
-          .hamburger { display: block !important; }
+          .hamburger { display: flex !important; }
           .book-btn { display: none !important; }
         }
       `}</style>

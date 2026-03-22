@@ -12,7 +12,7 @@ export default function PhotoStrip() {
     const doubled = [...repeated, ...repeated]
 
     return (
-        <div style={{
+        <div className="photo-strip" style={{
             overflow: 'hidden',
             height: '320px',
             padding: 0,
@@ -59,6 +59,11 @@ export default function PhotoStrip() {
                     </div>
                 ))}
             </div>
-        </div>
+        <style>{`
+        @media (max-width: 768px) {
+          .photo-strip { height: 180px !important; }
+        }
+      `}</style>
+    </div>
     )
 }

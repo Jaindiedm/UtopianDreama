@@ -21,6 +21,21 @@ body {
   cursor: none;
 }
 
+/* Restore cursor on touch/mobile devices */
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none; }
+}
+
+/* Navbar responsive padding helper */
+.nav-inner {
+  padding: 28px 60px;
+  transition: padding 0.4s ease;
+}
+@media (max-width: 768px) {
+  .nav-inner { padding: 20px 20px !important; }
+}
+
 .font-display { font-family: 'Cormorant Garamond', serif; }
 
 .cursor-dot {

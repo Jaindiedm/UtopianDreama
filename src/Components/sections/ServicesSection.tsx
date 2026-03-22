@@ -57,7 +57,7 @@ export default function ServicesSection() {
                 </div>
 
                 {/* Cards */}
-                <div style={{
+                <div className="services-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '1px',

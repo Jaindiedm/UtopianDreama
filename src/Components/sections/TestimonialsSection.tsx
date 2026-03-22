@@ -175,6 +175,13 @@ export default function TestimonialsSection() {
                     ))}
                 </div>
             </div>
+            <style>{`
+        @media (max-width: 768px) {
+          #testimonials > div {
+            padding: 0 24px !important;
+          }
+        }
+      `}</style>
         </section>
     )
 }

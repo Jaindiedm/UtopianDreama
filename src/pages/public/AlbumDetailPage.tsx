@@ -93,6 +93,7 @@ export default function AlbumDetailPage() {
 
         {/* Back Button */}
         <button
+          className="album-hero-back"
           onClick={() => navigate('/')}
           style={{
             position: 'absolute',
@@ -127,7 +128,9 @@ export default function AlbumDetailPage() {
         </button>
 
         {/* Album Info */}
-        <div style={{
+        <div
+          className="album-hero-info"
+          style={{
           position: 'absolute',
           bottom: '60px',
           left: '60px',
@@ -182,7 +185,9 @@ export default function AlbumDetailPage() {
 
       {/* Description */}
       {album.description && (
-        <div style={{
+        <div
+          className="album-description"
+          style={{
           background: 'var(--charcoal)',
           padding: '48px 60px',
           borderBottom: '1px solid var(--border)',
@@ -219,7 +224,9 @@ export default function AlbumDetailPage() {
             No photos in this album yet.
           </div>
         ) : (
-          <div style={{
+          <div
+            className="album-grid"
+            style={{
             columns: 3,
             columnGap: '6px',
           }}>

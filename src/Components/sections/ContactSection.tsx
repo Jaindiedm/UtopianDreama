@@ -146,7 +146,7 @@ export default function ContactSection() {
                         </div>
                     ) : (
                         <>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                            <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                                 <FormField
                                     label="First Name"
                                     value={form.first_name}
@@ -258,6 +258,9 @@ export default function ContactSection() {
             grid-template-columns: 1fr !important;
             padding: 0 24px !important;
             gap: 60px !important;
+          }
+          #contact .name-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

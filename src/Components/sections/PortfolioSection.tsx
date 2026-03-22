@@ -81,7 +81,7 @@ export default function PortfolioSection() {
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '3px',
-          }}>
+          }} className="album-grid">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} style={{
                 aspectRatio: '2/3',
@@ -106,7 +106,7 @@ export default function PortfolioSection() {
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '3px',
-          }}>
+          }} className="album-grid">
             {filtered.slice(0, 6).map((album, index) => (
               <AlbumCard
                 key={album.id}
@@ -129,6 +129,11 @@ export default function PortfolioSection() {
           #portfolio > div {
             padding: 0 24px !important;
           }
+          #portfolio .album-grid {
+            grid-template-columns: 1fr 1fr !important;
+          }
+        }
+        @media (max-width: 480px) {
           #portfolio .album-grid {
             grid-template-columns: 1fr !important;
           }
