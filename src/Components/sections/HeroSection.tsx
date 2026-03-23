@@ -115,10 +115,10 @@ export default function HeroSection() {
                     color: '#1a1714',
                     marginBottom: '16px',
                 }}>
-                    Capturing{' '}
-                    <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Love</em>
+                    Turning every{' '}
+                    <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Moments into</em>
                     <br />
-                    in Every Frame
+                    Utopian Dreams
                 </h1>
 
                 {/* Subtitle */}
