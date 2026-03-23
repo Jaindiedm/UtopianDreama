@@ -132,7 +132,7 @@ export default function HeroSection() {
                     marginBottom: '48px',
                     letterSpacing: '0.05em',
                 }}>
-                    {settings.hero_subtitle || 'Moments crafted into timeless memories'}
+                    {settings.hero_subtitle || 'Turning every moments into Utopian Dreams.'}
                 </p>
 
                 {/* CTA Buttons */}
