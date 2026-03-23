@@ -1,10 +1,25 @@
 import { useAlbums } from '../../hooks/useAlbums'
+import { useSettings } from '../../hooks/useSettings'
 
 export default function PhotoStrip() {
-    const { albums, loading } = useAlbums()
-    const photos = albums.filter(a => a.cover_image_url)
+    const { albums, loading: albumsLoading } = useAlbums()
+    const { settings, loading: settingsLoading } = useSettings()
 
-    if (loading) return null
+    if (albumsLoading || settingsLoading) return null
+
+    let customPhotos: { url: string }[] = []
+    if (settings.photo_strip_images) {
+        try {
+            customPhotos = JSON.parse(settings.photo_strip_images)
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    const photos = customPhotos.length > 0
+        ? customPhotos.map(p => p.url)
+        : albums.filter(a => a.cover_image_url).map(a => a.cover_image_url!)
+
     if (photos.length < 1) return null
 
     // Repeat photos enough times so strip is always full (min 10 items)
@@ -31,7 +46,7 @@ export default function PhotoStrip() {
                     (e.currentTarget as HTMLDivElement).style.animationPlayState = 'running'
                 }}
             >
-                {doubled.map((album, i) => (
+                {doubled.map((url, i) => (
                     <div key={i} style={{
                         height: '100%',
                         width: '240px',
@@ -39,8 +54,8 @@ export default function PhotoStrip() {
                         overflow: 'hidden',
                     }}>
                         <img
-                            src={album.cover_image_url!}
-                            alt={album.title}
+                            src={url}
+                            alt="Strip Image"
                             style={{
                                 width: '100%',
                                 height: '100%',
@@ -66,4 +81,4 @@ export default function PhotoStrip() {
       `}</style>
     </div>
     )
-}
+}
