@@ -60,15 +60,7 @@ export default function PhotoStrip() {
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
-                                filter: 'saturate(0.65)',
-                                transition: 'filter 0.4s',
                                 display: 'block',
-                            }}
-                            onMouseEnter={e => {
-                                (e.target as HTMLImageElement).style.filter = 'saturate(1)'
-                            }}
-                            onMouseLeave={e => {
-                                (e.target as HTMLImageElement).style.filter = 'saturate(0.65)'
                             }}
                         />
                     </div>

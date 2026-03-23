@@ -79,12 +79,12 @@ export default function PortfolioSection() {
         {loading ? (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '3px',
           }} className="album-grid">
-            {[1, 2, 3, 4, 5, 6].map(i => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <div key={i} style={{
-                aspectRatio: '2/3',
+                aspectRatio: '1/1',
                 background: 'var(--charcoal)',
                 animation: 'pulse 1.5s ease-in-out infinite',
               }} />
@@ -104,15 +104,13 @@ export default function PortfolioSection() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '3px',
           }} className="album-grid">
-            {filtered.slice(0, 6).map((album, index) => (
+            {filtered.slice(0, 8).map(album => (
               <AlbumCard
                 key={album.id}
                 album={album}
-                featured={index === 0}
-                wide={index === 3}
                 onClick={() => navigate(`/albums/${album.slug}`)}
               />
             ))}
@@ -143,10 +141,8 @@ export default function PortfolioSection() {
   )
 }
 
-function AlbumCard({ album, featured, wide, onClick }: {
+function AlbumCard({ album, onClick }: {
   album: Album
-  featured: boolean
-  wide: boolean
   onClick: () => void
 }) {
   const [hovered, setHovered] = useState(false)
@@ -160,10 +156,7 @@ function AlbumCard({ album, featured, wide, onClick }: {
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
-        gridRow: featured ? 'span 2' : 'span 1',
-        gridColumn: wide ? 'span 2' : 'span 1',
-        minHeight: wide ? '280px' : 'auto',
-        aspectRatio: featured || wide ? 'unset' : '2/3',
+        aspectRatio: '1/1',
       }}
     >
       {album.cover_image_url ? (
