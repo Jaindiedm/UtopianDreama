@@ -1,6 +1,7 @@
 import { useSettings } from '../../hooks/useSettings'
 import { useAlbums } from '../../hooks/useAlbums'
 import { useReveal } from '../../hooks/useReveal'
+import aboutImg from '../../assets/UTD_4657 copy 3.webp'
 
 export default function AboutSection() {
     const { settings } = useSettings()
@@ -52,32 +53,16 @@ export default function AboutSection() {
                         background: 'var(--dark)',
                         overflow: 'hidden',
                     }}>
-                        {albums[0]?.cover_image_url ? (
-                            <img
-                                src={albums[0].cover_image_url}
-                                alt="Photographer"
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    filter: 'saturate(0.8)',
-                                }}
-                            />
-                        ) : (
-                            <div style={{
+                        <img
+                            src={aboutImg}
+                            alt="About the Artist"
+                            style={{
                                 width: '100%',
                                 height: '100%',
-                                background: 'linear-gradient(135deg, #1a1410, #2a1e14)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'var(--muted)',
-                                fontFamily: 'Cormorant Garamond, serif',
-                                fontStyle: 'italic',
-                            }}>
-                                Your Photo Here
-                            </div>
-                        )}
+                                objectFit: 'cover',
+                                filter: 'saturate(0.8)',
+                            }}
+                        />
                     </div>
 
                     {/* Stat badge */}

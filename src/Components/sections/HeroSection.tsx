@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
-import { useAlbums } from '../../hooks/useAlbums'
+import heroImg from '../../assets/UTD_9991 copy.webp'
 
 export default function HeroSection() {
     const { settings } = useSettings()
-    const { albums } = useAlbums()
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [scrollY, setScrollY] = useState(0)
     const [mounted, setMounted] = useState(false)
@@ -33,7 +32,7 @@ export default function HeroSection() {
         return () => clearTimeout(t)
     }, [])
 
-    const heroCover = albums.find(a => a.cover_image_url)?.cover_image_url
+    const heroCover = heroImg
 
     return (
         <section
