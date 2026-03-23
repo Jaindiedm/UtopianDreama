@@ -15,7 +15,7 @@ export default function HomePage() {
     return (
         <>
             <Helmet>
-                <title>{name} | Wedding & Portrait Photography</title>
+                <title>Utopian Dreama</title>
                 <meta name="description" content={settings.tagline || 'Professional wedding and portrait photography'} />
                 <meta property="og:title" content={`${name} | Photography`} />
                 <meta property="og:description" content={settings.tagline || ''} />

@@ -1,4 +1,4 @@
-import { Instagram, Mail, Phone, Heart } from 'lucide-react'
+import { Instagram, Facebook } from 'lucide-react'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -36,9 +36,8 @@ export default function Footer() {
             Capturing the ethereal moments and timeless stories that define your life's journey.
           </p>
           <div style={{ display: 'flex', gap: '20px' }}>
-            <a href="#" style={{ color: 'var(--gold)' }} className="hoverable"><Instagram size={20} /></a>
-            <a href="#" style={{ color: 'var(--gold)' }} className="hoverable"><Mail size={20} /></a>
-            <a href="#" style={{ color: 'var(--gold)' }} className="hoverable"><Phone size={20} /></a>
+            <a href="https://www.instagram.com/utopiandreama?igsh=bml0dzY1dXhqNGFr" style={{ color: 'var(--gold)' }} className="hoverable"><Instagram size={20} /></a>
+            <a href="https://www.facebook.com/share/17cFnZoRk6/" style={{ color: 'var(--gold)' }} className="hoverable"><Facebook size={20} /></a>
           </div>
         </div>
 
@@ -75,9 +74,9 @@ export default function Footer() {
             color: 'var(--gold)',
           }}>Contact</h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '15px' }}>
-            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>hello@utopiandreama.com</li>
-            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>+1 234 567 890</li>
-            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Los Angeles, CA</li>
+            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Utopiandreama@gmail.com</li>
+            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>0772113761</li>
+            <li style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Gampaha, Sri Lanka</li>
           </ul>
         </div>
       </div>
@@ -95,11 +94,9 @@ export default function Footer() {
         gap: '20px',
       }}>
         <p style={{ fontSize: '0.7rem', color: 'var(--muted)', opacity: 0.8, letterSpacing: '0.1em' }}>
-          © {currentYear} UTOPIAN DREAMA PORTFOLIO. ALL RIGHTS RESERVED.
+          © {currentYear} UTOPIAN DREAMA. ALL RIGHTS RESERVED.
         </p>
-        <p style={{ fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          Made with <Heart size={10} style={{ color: 'var(--gold)' }} /> for Art
-        </p>
+
       </div>
 
       <style>{`

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useSettings } from '../../hooks/useSettings'
+import logoImg from '../../assets/Utopian Dreama Logo 1.1v TM (1).png'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -26,7 +27,7 @@ export default function Navbar() {
     { label: 'Stories', href: '/#testimonials' },
   ]
 
-  const photographerName = settings.photographer_name || 'Your Name'
+  const photographerName = settings.photographer_name || 'Utopian Dreama'
   const nameParts = photographerName.split(' ')
   const firstName = nameParts.slice(0, -1).join(' ')
   const lastName = nameParts[nameParts.length - 1]
@@ -51,6 +52,9 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link to="/" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: '1.5rem',
           fontWeight: 300,
@@ -58,7 +62,8 @@ export default function Navbar() {
           color: 'var(--cream)',
           textDecoration: 'none',
         }}>
-          {firstName} <span style={{ color: 'var(--gold)' }}>{lastName}</span>
+          <img src={logoImg} alt="Utopian Dreama Logo" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+          <span>{firstName} <span style={{ color: 'var(--gold)' }}>{lastName}</span></span>
         </Link>
 
         {/* Desktop Nav Links */}
