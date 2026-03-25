@@ -1,7 +1,6 @@
 import HeroSection from '../../Components/sections/HeroSection'
 import AboutSection from '../../Components/sections/AboutSection'
 import PortfolioSection from '../../Components/sections/PortfolioSection'
-import PhotoStrip from '../../Components/sections/PhotoStrip'
 import ServicesSection from '../../Components/sections/ServicesSection'
 import TestimonialsSection from '../../Components/sections/TestimonialsSection'
 import ContactSection from '../../Components/sections/ContactSection'
@@ -24,7 +23,6 @@ export default function HomePage() {
             <HeroSection />
             <AboutSection />
             <PortfolioSection />
-            <PhotoStrip />
             <ServicesSection />
             <TestimonialsSection />
             <ContactSection />
