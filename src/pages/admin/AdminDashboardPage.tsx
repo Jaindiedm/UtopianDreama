@@ -12,7 +12,7 @@ import {
 // ══════════════════════════════════════════
 // TYPES
 // ══════════════════════════════════════════
-type Panel = 'dashboard' | 'albums' | 'testimonials' | 'enquiries' | 'settings'
+type Panel = 'dashboard' | 'albums' | 'testimonials' | 'enquiries' | 'settings' | 'singles'
 
 interface Enquiry {
   id: string
@@ -52,6 +52,7 @@ export default function AdminDashboardPage() {
     { id: 'testimonials' as Panel, label: 'Testimonials', icon: <MessageSquare size={17} /> },
     { id: 'enquiries' as Panel, label: 'Enquiries', icon: <Mail size={17} /> },
     { id: 'settings' as Panel, label: 'Site Settings', icon: <Settings size={17} /> },
+    { id: 'singles' as Panel, label: 'Singles Portfolio', icon: <Camera size={17} /> },
   ]
 
   return (
@@ -213,6 +214,7 @@ export default function AdminDashboardPage() {
           {activePanel === 'testimonials' && <TestimonialsPanel />}
           {activePanel === 'enquiries' && <EnquiriesPanel />}
           {activePanel === 'settings' && <SettingsPanel />}
+          {activePanel === 'singles' && <SinglesPanel />}
         </div>
       </main>
     </div>
@@ -1151,6 +1153,187 @@ function SettingsPanel() {
   )
 }
 
+
+// ══════════════════════════════════════════
+// SINGLES PORTFOLIO PANEL
+// ══════════════════════════════════════════
+function SinglesPanel() {
+  const [photos, setPhotos] = useState<{ url: string, public_id: string, category: string }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
+  const [dragOver, setDragOver] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<'Fashion' | 'Artistic'>('Fashion')
+
+  const loadPhotos = async () => {
+    setLoading(true)
+    const { data } = await supabase.from('site_settings').select('value').eq('key', 'singles_portfolio').single()
+    if (data && data.value) {
+      try {
+        setPhotos(JSON.parse(data.value))
+      } catch (e) {
+        setPhotos([])
+      }
+    } else {
+      setPhotos([])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadPhotos() }, [])
+
+  const savePhotos = async (newPhotos: { url: string, public_id: string, category: string }[]) => {
+    await supabase.from('site_settings').upsert({
+      key: 'singles_portfolio',
+      value: JSON.stringify(newPhotos),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' })
+    setPhotos(newPhotos)
+  }
+
+  const handleFiles = async (files: FileList) => {
+    const fileArray = Array.from(files)
+    let currentPhotos = [...photos]
+
+    for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i]
+        const key = `${Date.now()}-${i}`
+        setUploadProgress(p => ({ ...p, [key]: 0 }))
+        try {
+            const result = await uploadImage(file, (pct) => {
+                setUploadProgress(p => ({ ...p, [key]: pct }))
+            })
+            const newPhoto = { url: result.url, public_id: result.public_id, category: activeCategory }
+            currentPhotos = [...currentPhotos, newPhoto]
+            setUploadProgress(p => { const next = { ...p }; delete next[key]; return next })
+        } catch {
+            setUploadProgress(p => { const next = { ...p }; delete next[key]; return next })
+        }
+    }
+    await savePhotos(currentPhotos)
+  }
+
+  const handleDelete = async (index: number) => {
+    if (!confirm('Remove this photo?')) return
+    const newPhotos = photos.filter((_, i) => i !== index)
+    await savePhotos(newPhotos)
+  }
+
+  if (loading) return <LoadingRows />
+
+  const filteredPhotos = photos.filter(p => p.category === activeCategory)
+  
+  return (
+    <div>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: 'var(--cream)', marginBottom: '4px' }}>
+            Singles Portfolio
+          </h2>
+          <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+            Manage individual standalone photos for Fashion and Artistic categories.
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        {['Fashion', 'Artistic'].map(cat => (
+           <button
+             key={cat}
+             onClick={() => setActiveCategory(cat as any)}
+             style={{
+               background: activeCategory === cat ? 'var(--gold)' : 'transparent',
+               color: activeCategory === cat ? 'var(--dark)' : 'var(--muted)',
+               border: `1px solid ${activeCategory === cat ? 'var(--gold)' : 'var(--border)'}`,
+               padding: '8px 20px',
+               fontSize: '0.65rem',
+               letterSpacing: '0.2em',
+               textTransform: 'uppercase',
+               cursor: 'pointer',
+               transition: 'all 0.3s',
+               fontFamily: 'Jost, sans-serif',
+             }}
+           >
+             {cat} ({photos.filter(p => p.category === cat).length})
+           </button>
+        ))}
+      </div>
+
+      <label
+        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', gap: '12px', padding: '40px',
+          border: `2px dashed ${dragOver ? 'var(--gold)' : 'var(--border)'}`,
+          background: dragOver ? 'rgba(201,169,110,0.04)' : 'transparent',
+          cursor: 'pointer', marginBottom: '24px', transition: 'all 0.3s',
+        }}
+      >
+        <Upload size={28} color={dragOver ? 'var(--gold)' : 'var(--muted)'} />
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--cream)', marginBottom: '4px' }}>
+            Click to upload or drag & drop photos to {activeCategory}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+            JPG, PNG, WEBP — multiple files supported
+          </div>
+        </div>
+        <input type="file" accept="image/*" multiple style={{ display: 'none' }}
+          onChange={e => e.target.files && handleFiles(e.target.files)} />
+      </label>
+
+      {Object.entries(uploadProgress).map(([key, pct]) => (
+        <div key={key} style={{ background: 'var(--charcoal)', border: '1px solid var(--border)', padding: '12px 16px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Uploading to {activeCategory}...</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--gold)' }}>{pct}%</span>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.05)', height: '3px' }}>
+            <div style={{ height: '100%', background: 'var(--gold)', width: `${pct}%`, transition: 'width 0.3s' }} />
+          </div>
+        </div>
+      ))}
+
+      {filteredPhotos.length === 0 ? (
+        <div style={{
+          padding: '40px',
+          textAlign: 'center',
+          border: '1px dashed var(--border)',
+          background: 'rgba(255,255,255,0.02)',
+          color: 'var(--muted)',
+          fontSize: '0.9rem',
+        }}>
+          No single photos uploaded for {activeCategory} yet.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+          {photos.map((photo, i) => {
+             if (photo.category !== activeCategory) return null;
+             return (
+              <div
+                key={i}
+                className="hover-container"
+                style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden', background: 'var(--charcoal)' }}
+              >
+                <img src={photo.url} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s' }} className="hover-img" loading="lazy" />
+                <div className="hover-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.6)', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
+                  <button onClick={() => handleDelete(i)} style={{ background: 'rgba(224,112,112,0.9)', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+          <style>{`
+            .hover-container:hover .hover-img { transform: scale(1.05); }
+            .hover-container:hover .hover-overlay { display: flex !important; }
+          `}</style>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ══════════════════════════════════════════
 // SHARED UI COMPONENTS
