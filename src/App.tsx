@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import HomePage from './pages/public/HomePage'
+import AlbumsPage from './pages/public/AlbumsPage'
 import AlbumDetailPage from './pages/public/AlbumDetailPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
@@ -24,6 +25,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={
           <PublicLayout><HomePage /></PublicLayout>
+        } />
+        <Route path="/albums" element={
+          <PublicLayout><AlbumsPage /></PublicLayout>
         } />
         <Route path="/albums/:slug" element={
           <PublicLayout><AlbumDetailPage /></PublicLayout>

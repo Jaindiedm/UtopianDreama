@@ -107,7 +107,7 @@ export default function PortfolioSection() {
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '3px',
           }} className="album-grid">
-            {filtered.slice(0, 8).map(album => (
+            {filtered.slice(0, 4).map(album => (
               <AlbumCard
                 key={album.id}
                 album={album}
@@ -116,6 +116,34 @@ export default function PortfolioSection() {
             ))}
           </div>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}>
+          <button
+            onClick={() => navigate('/albums')}
+            style={{
+              padding: '16px 40px',
+              background: 'transparent',
+              color: 'var(--gold)',
+              border: '1px solid var(--gold)',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: '0.75rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              transition: 'all 0.4s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--gold)';
+              e.currentTarget.style.color = '#1a1714';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--gold)';
+            }}
+          >
+            View All Collections
+          </button>
+        </div>
       </div>
 
       <style>{`
