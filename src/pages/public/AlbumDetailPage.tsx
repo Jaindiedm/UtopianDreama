@@ -173,10 +173,22 @@ export default function AlbumDetailPage() {
             fontWeight: 300,
             color: 'var(--cream)',
             lineHeight: 1,
-            marginBottom: '20px',
+            marginBottom: album.couple_names ? '8px' : '20px',
           }}>
             {album.title}
           </h1>
+
+          {album.couple_names && (
+            <div style={{
+              fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
+              fontFamily: 'Cormorant Garamond, serif',
+              fontStyle: 'italic',
+              color: 'var(--gold)',
+              marginBottom: '20px',
+            }}>
+              {album.couple_names}
+            </div>
+          )}
 
           {/* Meta info row */}
           <div style={{
@@ -184,9 +196,6 @@ export default function AlbumDetailPage() {
             gap: '24px',
             flexWrap: 'wrap',
           }}>
-            {album.couple_names && (
-              <MetaTag icon={<Camera size={13} />} text={album.couple_names} />
-            )}
             {album.location && (
               <MetaTag icon={<MapPin size={13} />} text={album.location} />
             )}

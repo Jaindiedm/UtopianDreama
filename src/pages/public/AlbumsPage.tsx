@@ -309,6 +309,18 @@ function MasonryAlbumCard({ album, onClick }: { album: any; onClick: () => void 
                         }} 
                     />
                 </h2>
+                
+                {album.couple_names && (
+                    <div style={{ 
+                        fontSize: '0.9rem', 
+                        fontStyle: 'italic', 
+                        fontFamily: 'Cormorant Garamond, serif', 
+                        color: 'rgba(255,255,255,0.85)',
+                        marginTop: '2px'
+                    }}>
+                        {album.couple_names}
+                    </div>
+                )}
             </div>
         </article>
     )

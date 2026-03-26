@@ -311,6 +311,17 @@ function AlbumCard({ album, onClick }: {
         }}>
           {album.title}
         </div>
+        {album.couple_names && (
+          <div style={{
+            fontSize: '0.9rem',
+            fontStyle: 'italic',
+            fontFamily: 'Cormorant Garamond, serif',
+            color: 'rgba(255,255,255,0.85)',
+            marginTop: '2px',
+          }}>
+            {album.couple_names}
+          </div>
+        )}
         {album.location && (
           <div style={{
             fontSize: '0.75rem',
