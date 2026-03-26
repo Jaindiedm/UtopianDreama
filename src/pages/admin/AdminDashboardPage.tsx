@@ -594,8 +594,25 @@ function AlbumModal({ album, onClose, onSaved }: {
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState(album?.cover_image_url || '')
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [bannerPreview, setBannerPreview] = useState('')
+  const [siteBanners, setSiteBanners] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', 'album_banners').single().then(({ data }) => {
+      if (data?.value) {
+        try {
+          const dict = JSON.parse(data.value)
+          setSiteBanners(dict)
+          if (album?.id && dict[album.id]) {
+            setBannerPreview(dict[album.id])
+          }
+        } catch (e) {}
+      }
+    })
+  }, [album?.id])
 
   const autoSlug = (title: string) =>
     title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -627,12 +644,34 @@ function AlbumModal({ album, onClose, onSaved }: {
       updated_at: new Date().toISOString(),
     }
 
+    let createdAlbumId = album?.id
+
     if (album) {
-      const { error: err } = await supabase.from('albums').update(payload).eq('id', album.id)
+      const { data, error: err } = await supabase.from('albums').update(payload).eq('id', album.id).select().single()
       if (err) { setError(err.message); setSaving(false); return }
+      createdAlbumId = data.id
     } else {
-      const { error: err } = await supabase.from('albums').insert(payload)
+      const { data, error: err } = await supabase.from('albums').insert(payload).select().single()
       if (err) { setError(err.message); setSaving(false); return }
+      createdAlbumId = data.id
+    }
+
+    if (createdAlbumId) {
+      if (!bannerPreview && siteBanners[createdAlbumId]) {
+        const nextBanners = { ...siteBanners }
+        delete nextBanners[createdAlbumId]
+        await supabase.from('site_settings').upsert({ key: 'album_banners', value: JSON.stringify(nextBanners), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      } else if (bannerFile) {
+        try {
+          const res = await uploadImage(bannerFile)
+          const nextBanners = { ...siteBanners, [createdAlbumId]: res.url }
+          await supabase.from('site_settings').upsert({ key: 'album_banners', value: JSON.stringify(nextBanners), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+        } catch (e) {
+          setError('Banner image upload failed.')
+          setSaving(false)
+          return
+        }
+      }
     }
 
     onSaved()
@@ -708,6 +747,34 @@ function AlbumModal({ album, onClose, onSaved }: {
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
             const file = e.target.files?.[0]
             if (file) { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)) }
+          }} />
+        </label>
+      </div>
+
+      <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>Hero Banner Image <span style={{ textTransform: 'none', letterSpacing: 'normal', color: 'var(--muted-dark)', opacity: 0.7 }}>(Optional - defaults to cover)</span></div>
+        {bannerPreview && (
+          <div style={{ marginBottom: '12px', position: 'relative', display: 'inline-block' }}>
+            <img src={bannerPreview} style={{ height: '80px', width: '100%', objectFit: 'cover', display: 'block', border: '1px solid var(--border)' }} />
+            <button onClick={() => { setBannerPreview(''); setBannerFile(null) }} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(224,112,112,0.9)', border: 'none', color: 'white', width: '22px', height: '22px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={12} />
+            </button>
+          </div>
+        )}
+        <label style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '8px', padding: '16px', border: '2px dashed var(--border)',
+          cursor: 'pointer', fontSize: '0.75rem', color: 'var(--muted)',
+          transition: 'all 0.3s', letterSpacing: '0.1em',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+        >
+          <Upload size={16} />
+          {bannerPreview ? 'Change Banner Image' : 'Upload Banner Image'}
+          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) { setBannerFile(file); setBannerPreview(URL.createObjectURL(file)) }
           }} />
         </label>
       </div>

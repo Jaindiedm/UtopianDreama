@@ -149,8 +149,9 @@ export default function PortfolioSection() {
           </div>
         ) : (
           <div style={{
-            columnCount: 4,
-            columnGap: '8px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '3px',
           }} className="album-grid">
             {filteredAlbums.slice(0, 4).map(album => (
               <AlbumCard
@@ -247,8 +248,7 @@ function AlbumCard({ album, onClick }: {
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
-        marginBottom: '8px',
-        breakInside: 'avoid',
+        aspectRatio: '4/5',
       }}
     >
       {album.cover_image_url ? (
@@ -257,7 +257,8 @@ function AlbumCard({ album, onClick }: {
           alt={album.title}
           style={{
             width: '100%',
-            height: 'auto',
+            height: '100%',
+            objectFit: 'cover',
             display: 'block',
             transform: hovered ? 'scale(1.06)' : 'scale(1)',
             filter: hovered ? 'saturate(0.9)' : 'saturate(0.7)',

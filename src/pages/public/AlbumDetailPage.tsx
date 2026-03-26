@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { ArrowLeft, X, ChevronLeft, ChevronRight, MapPin, Calendar, Camera } from 'lucide-react'
 import { useAlbum } from '../../hooks/useAlbums'
 import { optimizeImage } from '../../lib/cloudinary'
+import { supabase } from '../../lib/supabase'
 import type { Photo } from '../../types'
 
 export default function AlbumDetailPage() {
@@ -11,6 +12,20 @@ export default function AlbumDetailPage() {
   const navigate = useNavigate()
   const { album, photos, loading } = useAlbum(slug || '')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [heroBanner, setHeroBanner] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (album?.id) {
+      supabase.from('site_settings').select('value').eq('key', 'album_banners').single().then(({ data }) => {
+        if (data?.value) {
+          try {
+            const dict = JSON.parse(data.value)
+            if (dict[album.id]) setHeroBanner(dict[album.id])
+          } catch (e) {}
+        }
+      })
+    }
+  }, [album?.id])
 
   // Keyboard navigation for lightbox
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -65,9 +80,9 @@ export default function AlbumDetailPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {album.cover_image_url ? (
+        {heroBanner || album.cover_image_url ? (
           <img
-            src={album.cover_image_url}
+            src={heroBanner || album.cover_image_url}
             alt={album.title}
             style={{
               width: '100%',
@@ -225,18 +240,28 @@ export default function AlbumDetailPage() {
           </div>
         ) : (
           <div
-            className="album-grid"
+            className="luxury-gallery"
             style={{
-            columns: 3,
-            columnGap: '6px',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '60px',
+            maxWidth: '1200px',
+            margin: '0 auto',
           }}>
             {photos.map((photo, index) => (
-              <PhotoItem
+              <div 
                 key={photo.id}
-                photo={photo}
-                index={index}
-                onClick={() => setLightboxIndex(index)}
-              />
+                className={`luxury-item luxury-item-${index % 2}`}
+                style={{
+                  marginTop: index % 2 !== 0 ? '140px' : '0',
+                }}
+              >
+                <PhotoItem
+                  photo={photo}
+                  index={index}
+                  onClick={() => setLightboxIndex(index)}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -258,10 +283,15 @@ export default function AlbumDetailPage() {
           .album-hero-back { top: 80px !important; left: 24px !important; }
           .album-hero-info { left: 24px !important; right: 24px !important; bottom: 32px !important; }
           .album-description { padding: 32px 24px !important; }
-          .album-grid { padding: 32px 16px !important; columns: 2 !important; }
         }
-        @media (max-width: 480px) {
-          .album-grid { columns: 1 !important; }
+        @media (max-width: 900px) {
+          .luxury-gallery {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+          }
+          .luxury-item {
+            margin-top: 0 !important;
+          }
         }
       `}</style>
     </>

@@ -1,12 +1,44 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { ArrowUpRight } from 'lucide-react'
 import { useAlbums } from '../../hooks/useAlbums'
+import { supabase } from '../../lib/supabase'
+
+const CATEGORIES = ['All', 'Wedding', 'Pre-Wedding', 'Fashion', 'Artistic']
 
 export default function AlbumsPage() {
-    const { albums, loading } = useAlbums()
+    const { albums, loading: albumsLoading } = useAlbums()
     const navigate = useNavigate()
     const [mounted, setMounted] = useState(false)
+    const [activeCategory, setActiveCategory] = useState('All')
+
+    const [singles, setSingles] = useState<{url: string, public_id: string, category: string}[]>([])
+    const [singlesLoading, setSinglesLoading] = useState(true)
+    const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+
+    useEffect(() => {
+        setMounted(true)
+        window.scrollTo(0, 0)
+    }, [])
+
+    useEffect(() => {
+        setSinglesLoading(true)
+        supabase.from('site_settings').select('value').eq('key', 'singles_portfolio').single().then(({ data }) => {
+            if (data?.value) {
+                try { setSingles(JSON.parse(data.value)) } catch (e) {}
+            }
+            setSinglesLoading(false)
+        })
+    }, [])
+
+    const filteredAlbums = activeCategory === 'All'
+        ? albums
+        : albums.filter(a => a.category === activeCategory)
+
+    const showSingles = activeCategory === 'Fashion' || activeCategory === 'Artistic'
+    const filteredSingles = singles.filter(s => s.category === activeCategory)
+    const loading = albumsLoading || singlesLoading
 
     useEffect(() => {
         setMounted(true)
@@ -54,185 +86,232 @@ export default function AlbumsPage() {
                 </h1>
             </header>
 
-            {/* Editorial Layout */}
+            {/* Category Filter */}
+            <div style={{
+                display: 'flex',
+                gap: '12px',
+                marginBottom: '48px',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                maxWidth: '1400px',
+                margin: '0 auto 48px',
+                padding: '0 24px'
+            }}>
+                {CATEGORIES.map(cat => (
+                    <FilterButton
+                        key={cat}
+                        label={cat}
+                        active={activeCategory === cat}
+                        onClick={() => setActiveCategory(cat)}
+                    />
+                ))}
+            </div>
+
+            {/* Gallery Layout */}
             <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px 120px' }}>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '100px', color: 'var(--muted)' }}>
-                        Loading collections...
+                    <div className="bento-gallery">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="bento-item" style={{
+                                background: 'var(--charcoal)',
+                                animation: 'pulse 1.5s ease-in-out infinite'
+                            }} />
+                        ))}
                     </div>
-                ) : albums.length === 0 ? (
+                ) : showSingles ? (
+                    filteredSingles.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '100px', color: 'var(--muted)' }}>
+                            No single photos added for this category yet.
+                        </div>
+                    ) : (
+                        <div style={{ columnCount: 3, columnGap: '16px' }} className="single-masonry">
+                            {filteredSingles.map((photo, i) => (
+                                <div 
+                                    key={i} 
+                                    onClick={() => setLightboxImg(photo.url)}
+                                    style={{ position: 'relative', cursor: 'zoom-in', overflow: 'hidden', marginBottom: '16px', breakInside: 'avoid' }}
+                                    className="single-hover-wrap"
+                                >
+                                    <img src={photo.url} className="single-hover-img" style={{ width: '100%', height: 'auto', display: 'block', transition: 'transform 0.4s easeOut' }} loading="lazy" />
+                                    <div className="single-hover-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.2)', opacity: 0, transition: 'opacity 0.4s' }} />
+                                </div>
+                            ))}
+                        </div>
+                    )
+                ) : filteredAlbums.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '100px', color: 'var(--muted)' }}>
-                        No collections available yet.
+                        No collections available in this category.
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '120px' }}>
-                        {albums.map((album, index) => {
-                            const isEven = index % 2 === 0
-                            return (
-                                <AlbumEditorialRow 
-                                    key={album.id} 
-                                    album={album} 
-                                    isEven={isEven} 
-                                    onClick={() => navigate(`/albums/${album.slug}`)} 
-                                />
-                            )
-                        })}
+                    <div className="masonry-gallery" style={{ columnCount: 4, columnGap: '16px' }}>
+                        {filteredAlbums.map((album, index) => (
+                            <MasonryAlbumCard 
+                                key={album.id} 
+                                album={album} 
+                                onClick={() => navigate(`/albums/${album.slug}`)} 
+                            />
+                        ))}
                     </div>
                 )}
             </main>
+
+            {/* Lightbox for Singles */}
+            {lightboxImg && (
+                <div 
+                    onClick={() => setLightboxImg(null)}
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(10,8,6,0.95)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+                        cursor: 'zoom-out', animation: 'fadeIn 0.3s ease-out'
+                    }}
+                >
+                    <img src={lightboxImg} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', animation: 'scaleUp 0.3s ease-out' }} />
+                </div>
+            )}
+
+            <style>{`
+                .single-hover-wrap:hover .single-hover-img { transform: scale(1.04); }
+                .single-hover-wrap:hover .single-hover-overlay { opacity: 1; }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.4; }
+                    50% { opacity: 0.8; }
+                }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes scaleUp { from { transform: scale(0.95); } to { transform: scale(1); } }
+                
+                @media (max-width: 900px) {
+                    .masonry-gallery { column-count: 2 !important; }
+                    .single-masonry { column-count: 2 !important; }
+                }
+                @media (max-width: 600px) {
+                    .masonry-gallery { column-count: 1 !important; }
+                    .single-masonry { column-count: 1 !important; }
+                }
+            `}</style>
         </div>
     )
 }
 
-function AlbumEditorialRow({ album, isEven, onClick }: { album: any; isEven: boolean; onClick: () => void }) {
+function FilterButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+    const [hovered, setHovered] = useState(false)
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                background: 'transparent',
+                color: active || hovered ? 'var(--gold)' : 'var(--muted)',
+                border: 'none',
+                fontFamily: 'Jost, sans-serif',
+                fontSize: '0.7rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                padding: '8px 16px',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+            }}
+        >
+            {label}
+            <span style={{
+                position: 'absolute',
+                bottom: 0,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: active ? '100%' : hovered ? '50%' : '0',
+                height: '1px',
+                background: 'var(--gold)',
+                transition: 'width 0.3s ease',
+                opacity: 0.5,
+            }} />
+        </button>
+    )
+}
+
+function MasonryAlbumCard({ album, onClick }: { album: any; onClick: () => void }) {
     const [hovered, setHovered] = useState(false)
 
     return (
         <article 
-            style={{ 
-                display: 'flex', 
-                flexDirection: 'row', 
-                alignItems: 'center',
-                gap: '8vw',
-                // Responsive layout wrapper class
-                flexWrap: 'wrap'
-            }}
-            className={isEven ? 'row-even' : 'row-odd'}
+            className="masonry-item"
+            style={{ position: 'relative', breakInside: 'avoid', marginBottom: '16px', cursor: 'pointer', overflow: 'hidden' }}
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
         >
-            {/* Image Side */}
-                <div 
-                    style={{ 
-                        flex: '1 1 500px', 
-                        position: 'relative', 
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        order: isEven ? 1 : 2,
+            {album.cover_image_url && (
+                <img 
+                    src={album.cover_image_url} 
+                    alt={album.title}
+                    style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block',
+                        filter: hovered ? 'saturate(1)' : 'saturate(0.8)',
+                        transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                        transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.5s'
                     }}
-                    className="img-container"
-                    onClick={onClick}
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                >
-                    {album.cover_image_url ? (
-                        <img 
-                            src={album.cover_image_url} 
-                            alt={album.title}
-                            style={{
-                                width: '100%',
-                                height: 'auto',
-                                maxHeight: '80vh',
-                                objectFit: 'cover',
-                                display: 'block',
-                            transition: 'transform 1.2s cubic-bezier(0.16,1,0.3,1), filter 0.8s',
-                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                            filter: hovered ? 'saturate(1)' : 'saturate(0.8)'
-                        }}
-                    />
-                ) : (
-                    <div style={{ width: '100%', height: '100%', background: 'var(--charcoal)' }} />
-                )}
-                
-                {/* Image overlay gradient */}
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to top, rgba(14,12,10,0.4), transparent 50%)',
-                    opacity: hovered ? 0 : 1,
-                    transition: 'opacity 0.8s',
-                    pointerEvents: 'none'
-                }} />
-            </div>
+                />
+            )}
+            
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to top, rgba(14,12,10,0.85) 0%, rgba(14,12,10,0.2) 50%, transparent 100%)',
+                opacity: hovered ? 1 : 0.7,
+                transition: 'opacity 0.4s',
+                pointerEvents: 'none'
+            }} />
 
-            {/* Text Side */}
-            <div 
-                style={{ 
-                    flex: '1 1 300px',
-                    order: isEven ? 2 : 1,
-                    padding: '24px 0'
-                }}
-                className="text-container"
-            >
+            <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+            }}>
                 <div style={{ 
-                    fontSize: '0.65rem', 
-                    letterSpacing: '0.3em', 
+                    fontSize: '0.6rem', 
+                    letterSpacing: '0.25em', 
                     textTransform: 'uppercase', 
-                    color: 'var(--muted)',
-                    marginBottom: '16px'
+                    color: 'var(--gold)',
+                    transform: hovered ? 'translateY(0)' : 'translateY(8px)',
+                    opacity: hovered ? 1 : 0,
+                    transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)'
                 }}>
-                    {album.category} {album.event_date && ` • ${new Date(album.event_date).getFullYear()}`}
+                    {album.category} {album.event_date && `• ${new Date(album.event_date).getFullYear()}`}
                 </div>
                 
                 <h2 style={{ 
                     fontFamily: 'Cormorant Garamond, serif',
-                    fontSize: 'clamp(2.5rem, 4vw, 3.5rem)',
+                    fontSize: 'clamp(1.5rem, 2vw, 2rem)',
                     fontWeight: 300,
                     lineHeight: 1.1,
-                    color: '#1a1714',
-                    marginBottom: '24px'
+                    color: 'var(--cream)',
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
                 }}>
                     {album.title}
+                    <ArrowUpRight 
+                        size={20} 
+                        style={{ 
+                            color: 'var(--gold)', 
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? 'translate(0, 0)' : 'translate(-10px, 10px)',
+                            transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)' 
+                        }} 
+                    />
                 </h2>
-                
-                {album.location && (
-                    <div style={{ 
-                        fontStyle: 'italic', 
-                        fontFamily: 'Cormorant Garamond, serif',
-                        fontSize: '1.4rem',
-                        color: 'var(--gold)',
-                        marginBottom: '32px'
-                    }}>
-                        {album.location}
-                    </div>
-                )}
-                
-                {album.description && (
-                    <p style={{
-                        fontSize: '0.9rem',
-                        lineHeight: 1.8,
-                        color: 'var(--muted)',
-                        fontWeight: 300,
-                        marginBottom: '40px',
-                        maxWidth: '400px'
-                    }}>
-                        {album.description.slice(0, 150)}{album.description.length > 150 ? '...' : ''}
-                    </p>
-                )}
-
-                <button
-                    onClick={onClick}
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                    style={{
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: `1px solid ${hovered ? 'var(--gold)' : 'rgba(26,23,20,0.3)'}`,
-                        color: hovered ? 'var(--gold)' : '#1a1714',
-                        padding: '0 0 8px 0',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.75rem',
-                        letterSpacing: '0.25em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                    }}
-                >
-                    Explore Gallery <span style={{ transition: 'transform 0.3s', transform: hovered ? 'translateX(5px)' : 'translateX(0)' }}>→</span>
-                </button>
             </div>
-
-            <style>{`
-                @media (max-width: 900px) {
-                    .row-even, .row-odd {
-                        flex-direction: column !important;
-                        gap: 40px !important;
-                    }
-                    .img-container { order: 1 !important; width: 100% !important; flex: none !important; }
-                    .text-container { order: 2 !important; width: 100% !important; flex: none !important; padding: 0 5vw !important; text-align: center; display: flex; flex-direction: column; align-items: center; }
-                }
-            `}</style>
         </article>
     )
 }
+
+// file end
