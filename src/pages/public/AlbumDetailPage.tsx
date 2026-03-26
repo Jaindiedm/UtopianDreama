@@ -88,7 +88,6 @@ export default function AlbumDetailPage() {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              filter: 'saturate(0.8)',
             }}
           />
         ) : (
@@ -178,12 +177,13 @@ export default function AlbumDetailPage() {
             {album.title}
           </h1>
 
-          {album.couple_names && (
+          {album.couple_names && album.couple_names.trim().toLowerCase() !== album.title.trim().toLowerCase() && (
             <div style={{
               fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
               fontFamily: 'Cormorant Garamond, serif',
               fontStyle: 'italic',
-              color: 'var(--gold)',
+              fontWeight: 600,
+              color: 'white',
               marginBottom: '20px',
             }}>
               {album.couple_names}
@@ -333,8 +333,7 @@ function PhotoItem({ photo, index, onClick }: {
           width: '100%',
           display: 'block',
           transform: hovered ? 'scale(1.03)' : 'scale(1)',
-          filter: hovered ? 'saturate(1)' : 'saturate(0.8)',
-          transition: 'transform 0.6s cubic-bezier(0.16,1,0.3,1), filter 0.4s',
+          transition: 'transform 0.6s cubic-bezier(0.16,1,0.3,1)',
         }}
       />
 

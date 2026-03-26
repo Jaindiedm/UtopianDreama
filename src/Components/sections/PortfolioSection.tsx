@@ -13,7 +13,7 @@ export default function PortfolioSection() {
   const { ref, visible } = useReveal()
   const navigate = useNavigate()
 
-  const [singles, setSingles] = useState<{url: string, public_id: string, category: string}[]>([])
+  const [singles, setSingles] = useState<{ url: string, public_id: string, category: string }[]>([])
   const [singlesLoading, setSinglesLoading] = useState(true)
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
 
@@ -21,7 +21,7 @@ export default function PortfolioSection() {
     setSinglesLoading(true)
     supabase.from('site_settings').select('value').eq('key', 'singles_portfolio').single().then(({ data }) => {
       if (data && data.value) {
-        try { setSingles(JSON.parse(data.value)) } catch (e) {}
+        try { setSingles(JSON.parse(data.value)) } catch (e) { }
       }
       setSinglesLoading(false)
     })
@@ -124,9 +124,9 @@ export default function PortfolioSection() {
           ) : (
             <div style={{ columnCount: 4, columnGap: '8px' }} className="single-grid">
               {filteredSingles.map((photo, i) => (
-                <div 
-                  key={i} 
-                  onClick={() => setLightboxImg(photo.url)} 
+                <div
+                  key={i}
+                  onClick={() => setLightboxImg(photo.url)}
                   className="single-hover-wrap"
                   style={{ position: 'relative', cursor: 'zoom-in', overflow: 'hidden', marginBottom: '8px', breakInside: 'avoid' }}
                 >
@@ -213,7 +213,7 @@ export default function PortfolioSection() {
 
       {/* Lightbox for Singles */}
       {lightboxImg && (
-        <div 
+        <div
           onClick={() => setLightboxImg(null)}
           style={{
             position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(10,8,6,0.95)',
@@ -261,8 +261,7 @@ function AlbumCard({ album, onClick }: {
             objectFit: 'cover',
             display: 'block',
             transform: hovered ? 'scale(1.06)' : 'scale(1)',
-            filter: hovered ? 'saturate(0.9)' : 'saturate(0.7)',
-            transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.5s',
+            transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1)',
           }}
         />
       ) : (
@@ -311,12 +310,13 @@ function AlbumCard({ album, onClick }: {
         }}>
           {album.title}
         </div>
-        {album.couple_names && (
+        {album.couple_names && album.couple_names.trim().toLowerCase() !== album.title.trim().toLowerCase() && (
           <div style={{
             fontSize: '0.9rem',
             fontStyle: 'italic',
+            fontWeight: 600,
             fontFamily: 'Cormorant Garamond, serif',
-            color: 'rgba(255,255,255,0.85)',
+            color: 'white',
             marginTop: '2px',
           }}>
             {album.couple_names}
