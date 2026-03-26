@@ -249,9 +249,8 @@ function MasonryAlbumCard({ album, onClick }: { album: any; onClick: () => void 
                         width: '100%',
                         height: 'auto',
                         display: 'block',
-                        filter: hovered ? 'saturate(1)' : 'saturate(0.8)',
                         transform: hovered ? 'scale(1.04)' : 'scale(1)',
-                        transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.5s'
+                        transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1)'
                     }}
                 />
             )}
@@ -309,6 +308,19 @@ function MasonryAlbumCard({ album, onClick }: { album: any; onClick: () => void 
                         }} 
                     />
                 </h2>
+                
+                {album.couple_names && album.couple_names.trim().toLowerCase() !== album.title.trim().toLowerCase() && (
+                    <div style={{ 
+                        fontSize: '0.9rem', 
+                        fontStyle: 'italic', 
+                        fontWeight: 600,
+                        fontFamily: 'Cormorant Garamond, serif', 
+                        color: 'white',
+                        marginTop: '2px'
+                    }}>
+                        {album.couple_names}
+                    </div>
+                )}
             </div>
         </article>
     )
