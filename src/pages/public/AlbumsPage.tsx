@@ -100,28 +100,29 @@ function AlbumEditorialRow({ album, isEven, onClick }: { album: any; isEven: boo
             className={isEven ? 'row-even' : 'row-odd'}
         >
             {/* Image Side */}
-            <div 
-                style={{ 
-                    flex: '1 1 500px', 
-                    position: 'relative', 
-                    aspectRatio: '3/4', 
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    order: isEven ? 1 : 2
-                }}
-                className="img-container"
-                onClick={onClick}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
-            >
-                {album.cover_image_url ? (
-                    <img 
-                        src={album.cover_image_url} 
-                        alt={album.title}
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
+                <div 
+                    style={{ 
+                        flex: '1 1 500px', 
+                        position: 'relative', 
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        order: isEven ? 1 : 2,
+                    }}
+                    className="img-container"
+                    onClick={onClick}
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                >
+                    {album.cover_image_url ? (
+                        <img 
+                            src={album.cover_image_url} 
+                            alt={album.title}
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '80vh',
+                                objectFit: 'cover',
+                                display: 'block',
                             transition: 'transform 1.2s cubic-bezier(0.16,1,0.3,1), filter 0.8s',
                             transform: hovered ? 'scale(1.05)' : 'scale(1)',
                             filter: hovered ? 'saturate(1)' : 'saturate(0.8)'

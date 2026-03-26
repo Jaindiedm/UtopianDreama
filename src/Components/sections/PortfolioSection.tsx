@@ -122,15 +122,15 @@ export default function PortfolioSection() {
               No single photos added for this category yet.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
+            <div style={{ columnCount: 4, columnGap: '8px' }} className="single-grid">
               {filteredSingles.map((photo, i) => (
                 <div 
                   key={i} 
                   onClick={() => setLightboxImg(photo.url)} 
                   className="single-hover-wrap"
-                  style={{ position: 'relative', aspectRatio: '3/4', cursor: 'zoom-in', overflow: 'hidden' }}
+                  style={{ position: 'relative', cursor: 'zoom-in', overflow: 'hidden', marginBottom: '8px', breakInside: 'avoid' }}
                 >
-                  <img src={photo.url} className="single-hover-img" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s easeOut' }} loading="lazy" />
+                  <img src={photo.url} className="single-hover-img" style={{ width: '100%', height: 'auto', display: 'block', transition: 'transform 0.4s easeOut' }} loading="lazy" />
                   <div className="single-hover-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.2)', opacity: 0, transition: 'opacity 0.4s' }} />
                 </div>
               ))}
@@ -149,9 +149,8 @@ export default function PortfolioSection() {
           </div>
         ) : (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '3px',
+            columnCount: 4,
+            columnGap: '8px',
           }} className="album-grid">
             {filteredAlbums.slice(0, 4).map(album => (
               <AlbumCard
@@ -199,17 +198,14 @@ export default function PortfolioSection() {
         }
         .single-hover-wrap:hover .single-hover-img { transform: scale(1.04); }
         .single-hover-wrap:hover .single-hover-overlay { opacity: 1; }
-        @media (max-width: 768px) {
-          #portfolio > div {
-            padding: 0 24px !important;
-          }
-          #portfolio .album-grid {
-            grid-template-columns: 1fr 1fr !important;
+        @media (max-width: 900px) {
+          #portfolio .album-grid, #portfolio .single-grid {
+            column-count: 2 !important;
           }
         }
         @media (max-width: 480px) {
-          #portfolio .album-grid {
-            grid-template-columns: 1fr !important;
+          #portfolio .album-grid, #portfolio .single-grid {
+            column-count: 1 !important;
           }
         }
       `}</style>
@@ -251,7 +247,8 @@ function AlbumCard({ album, onClick }: {
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
-        aspectRatio: '1/1',
+        marginBottom: '8px',
+        breakInside: 'avoid',
       }}
     >
       {album.cover_image_url ? (
@@ -260,8 +257,7 @@ function AlbumCard({ album, onClick }: {
           alt={album.title}
           style={{
             width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            height: 'auto',
             display: 'block',
             transform: hovered ? 'scale(1.06)' : 'scale(1)',
             filter: hovered ? 'saturate(0.9)' : 'saturate(0.7)',
