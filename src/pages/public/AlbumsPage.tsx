@@ -144,7 +144,7 @@ export default function AlbumsPage() {
                     </div>
                 ) : (
                     <div className="masonry-gallery" style={{ columnCount: 4, columnGap: '16px' }}>
-                        {filteredAlbums.map((album, index) => (
+                        {filteredAlbums.map(album => (
                             <MasonryAlbumCard 
                                 key={album.id} 
                                 album={album} 
