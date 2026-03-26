@@ -1,20 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAlbums } from '../../hooks/useAlbums'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../../hooks/useReveal'
+import { supabase } from '../../lib/supabase'
 import type { Album } from '../../types'
 
 const CATEGORIES = ['All', 'Wedding', 'Pre-Wedding', 'Fashion', 'Artistic']
 
 export default function PortfolioSection() {
-  const { albums, loading } = useAlbums()
+  const { albums, loading: albumsLoading } = useAlbums()
   const [activeCategory, setActiveCategory] = useState('All')
   const { ref, visible } = useReveal()
   const navigate = useNavigate()
 
-  const filtered = activeCategory === 'All'
+  const [singles, setSingles] = useState<{url: string, public_id: string, category: string}[]>([])
+  const [singlesLoading, setSinglesLoading] = useState(true)
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSinglesLoading(true)
+    supabase.from('site_settings').select('value').eq('key', 'singles_portfolio').single().then(({ data }) => {
+      if (data && data.value) {
+        try { setSingles(JSON.parse(data.value)) } catch (e) {}
+      }
+      setSinglesLoading(false)
+    })
+  }, [])
+
+  const filteredAlbums = activeCategory === 'All'
     ? albums
     : albums.filter(a => a.category === activeCategory)
+
+  const showSingles = activeCategory === 'Fashion' || activeCategory === 'Artistic'
+  const filteredSingles = singles.filter(s => s.category === activeCategory)
+  const loading = albumsLoading || singlesLoading
 
   return (
     <section id="portfolio" style={{ background: 'var(--dark)', padding: '120px 0' }}>
@@ -53,7 +72,7 @@ export default function PortfolioSection() {
               fontWeight: 300,
               color: 'var(--cream)',
             }}>
-              Wedding <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Albums</em>
+              <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Albums</em>
             </h2>
           </div>
         </div>
@@ -90,7 +109,34 @@ export default function PortfolioSection() {
               }} />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : showSingles ? (
+          filteredSingles.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '80px',
+              color: 'var(--muted)',
+              fontFamily: 'Cormorant Garamond, serif',
+              fontSize: '1.5rem',
+              fontStyle: 'italic',
+            }}>
+              No single photos added for this category yet.
+            </div>
+          ) : (
+            <div style={{ columnCount: 4, columnGap: '8px' }} className="single-grid">
+              {filteredSingles.map((photo, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => setLightboxImg(photo.url)} 
+                  className="single-hover-wrap"
+                  style={{ position: 'relative', cursor: 'zoom-in', overflow: 'hidden', marginBottom: '8px', breakInside: 'avoid' }}
+                >
+                  <img src={photo.url} className="single-hover-img" style={{ width: '100%', height: 'auto', display: 'block', transition: 'transform 0.4s easeOut' }} loading="lazy" />
+                  <div className="single-hover-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.2)', opacity: 0, transition: 'opacity 0.4s' }} />
+                </div>
+              ))}
+            </div>
+          )
+        ) : filteredAlbums.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '80px',
@@ -107,7 +153,7 @@ export default function PortfolioSection() {
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '3px',
           }} className="album-grid">
-            {filtered.slice(0, 8).map(album => (
+            {filteredAlbums.slice(0, 4).map(album => (
               <AlbumCard
                 key={album.id}
                 album={album}
@@ -116,6 +162,34 @@ export default function PortfolioSection() {
             ))}
           </div>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}>
+          <button
+            onClick={() => navigate('/albums')}
+            style={{
+              padding: '16px 40px',
+              background: 'transparent',
+              color: 'var(--gold)',
+              border: '1px solid var(--gold)',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: '0.75rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              transition: 'all 0.4s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--gold)';
+              e.currentTarget.style.color = '#1a1714';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--gold)';
+            }}
+          >
+            View All Collections
+          </button>
+        </div>
       </div>
 
       <style>{`
@@ -123,20 +197,38 @@ export default function PortfolioSection() {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 0.8; }
         }
-        @media (max-width: 768px) {
-          #portfolio > div {
-            padding: 0 24px !important;
-          }
-          #portfolio .album-grid {
-            grid-template-columns: 1fr 1fr !important;
+        .single-hover-wrap:hover .single-hover-img { transform: scale(1.04); }
+        .single-hover-wrap:hover .single-hover-overlay { opacity: 1; }
+        @media (max-width: 900px) {
+          #portfolio .album-grid, #portfolio .single-grid {
+            column-count: 2 !important;
           }
         }
         @media (max-width: 480px) {
-          #portfolio .album-grid {
-            grid-template-columns: 1fr !important;
+          #portfolio .album-grid, #portfolio .single-grid {
+            column-count: 1 !important;
           }
         }
       `}</style>
+
+      {/* Lightbox for Singles */}
+      {lightboxImg && (
+        <div 
+          onClick={() => setLightboxImg(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(10,8,6,0.95)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+            cursor: 'zoom-out',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+        >
+          <img src={lightboxImg} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', animation: 'scaleUp 0.3s ease-out' }} />
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes scaleUp { from { transform: scale(0.95); } to { transform: scale(1); } }
+          `}</style>
+        </div>
+      )}
     </section>
   )
 }
@@ -156,7 +248,7 @@ function AlbumCard({ album, onClick }: {
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
-        aspectRatio: '1/1',
+        aspectRatio: '4/5',
       }}
     >
       {album.cover_image_url ? (
