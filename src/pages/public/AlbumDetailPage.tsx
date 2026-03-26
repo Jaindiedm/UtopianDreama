@@ -76,7 +76,7 @@ export default function AlbumDetailPage() {
 
       {/* Hero Banner */}
       <div style={{
-        height: '70vh',
+        height: '100vh',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -224,7 +224,7 @@ export default function AlbumDetailPage() {
       {/* Photo Grid */}
       <div style={{
         background: 'var(--dark)',
-        padding: '60px',
+        padding: '75px 5vw',
         minHeight: '400px',
       }}>
         {photos.length === 0 ? (
@@ -240,28 +240,20 @@ export default function AlbumDetailPage() {
           </div>
         ) : (
           <div
-            className="luxury-gallery"
+            className="album-dense-masonry"
             style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '60px',
-            maxWidth: '1200px',
+            columnCount: 3,
+            columnGap: '6px',
+            maxWidth: '1000px',
             margin: '0 auto',
           }}>
             {photos.map((photo, index) => (
-              <div 
+              <PhotoItem
                 key={photo.id}
-                className={`luxury-item luxury-item-${index % 2}`}
-                style={{
-                  marginTop: index % 2 !== 0 ? '140px' : '0',
-                }}
-              >
-                <PhotoItem
-                  photo={photo}
-                  index={index}
-                  onClick={() => setLightboxIndex(index)}
-                />
-              </div>
+                photo={photo}
+                index={index}
+                onClick={() => setLightboxIndex(index)}
+              />
             ))}
           </div>
         )}
@@ -284,14 +276,14 @@ export default function AlbumDetailPage() {
           .album-hero-info { left: 24px !important; right: 24px !important; bottom: 32px !important; }
           .album-description { padding: 32px 24px !important; }
         }
-        @media (max-width: 900px) {
-          .luxury-gallery {
-            grid-template-columns: 1fr !important;
-            gap: 24px !important;
-          }
-          .luxury-item {
-            margin-top: 0 !important;
-          }
+        @media (max-width: 1024px) {
+          .album-dense-masonry { column-count: 3 !important; }
+        }
+        @media (max-width: 768px) {
+          .album-dense-masonry { column-count: 2 !important; }
+        }
+        @media (max-width: 480px) {
+          .album-dense-masonry { column-count: 1 !important; }
         }
       `}</style>
     </>
