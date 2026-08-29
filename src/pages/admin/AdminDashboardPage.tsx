@@ -576,7 +576,7 @@ function AlbumsPanel() {
 }
 
 function AlbumRow({
-  album, index, isDragging, isDropTarget,
+  album, index: _index, isDragging, isDropTarget,
   onEdit, onDelete, onTogglePublish, onManagePhotos,
   onDragStart, onDragEnter, onDragEnd,
 }: {
@@ -1049,7 +1049,7 @@ function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) 
 }
 
 function PhotoThumb({
-  photo, index, isDragging, isDropTarget, onDelete, onDragStart, onDragEnter, onDragEnd,
+  photo, index: _index, isDragging, isDropTarget, onDelete, onDragStart, onDragEnter, onDragEnd,
 }: {
   photo: Photo
   index: number
