@@ -6,7 +6,7 @@ import type { Album, Photo, Testimonial } from '../../types'
 import {
   LayoutDashboard, Images, MessageSquare, Settings,
   LogOut, Plus, Edit, Trash2, Eye, EyeOff, Upload,
-  X, Check, ChevronRight, Camera, BarChart3, Mail
+  X, Check, ChevronRight, Camera, BarChart3, Mail, GripVertical
 } from 'lucide-react'
 
 // ══════════════════════════════════════════
@@ -441,12 +441,16 @@ function AlbumsPanel() {
   const [showModal, setShowModal] = useState(false)
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null)
   const [showPhotos, setShowPhotos] = useState<Album | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
+  const [reordering, setReordering] = useState(false)
 
   const loadAlbums = async () => {
     setLoading(true)
     const { data } = await supabase
       .from('albums')
       .select('*')
+      .order('sort_order')
       .order('created_at', { ascending: false })
     setAlbums(data || [])
     setLoading(false)
@@ -466,6 +470,32 @@ function AlbumsPanel() {
     loadAlbums()
   }
 
+  // ── Album drag-to-reorder ──
+  const handleDragStart = (index: number) => setDragIndex(index)
+
+  const handleDragEnter = (index: number) => {
+    if (dragIndex === null || index === dragIndex) return
+    setDropIndex(index)
+  }
+
+  const handleDragEnd = async () => {
+    if (dragIndex === null || dropIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null); setDropIndex(null); return
+    }
+    setReordering(true)
+    const reordered = [...albums]
+    const [moved] = reordered.splice(dragIndex, 1)
+    reordered.splice(dropIndex, 0, moved)
+    setAlbums(reordered)
+    setDragIndex(null); setDropIndex(null)
+    await Promise.all(
+      reordered.map((a, idx) =>
+        supabase.from('albums').update({ sort_order: idx }).eq('id', a.id)
+      )
+    )
+    setReordering(false)
+  }
+
   if (showPhotos) {
     return (
       <PhotosManager
@@ -478,8 +508,17 @@ function AlbumsPanel() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-        <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-          {albums.length} album{albums.length !== 1 ? 's' : ''} total
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+            {albums.length} album{albums.length !== 1 ? 's' : ''} total
+          </div>
+          {albums.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.08em' }}>
+              <GripVertical size={12} color="var(--gold)" />
+              Drag rows to reorder
+              {reordering && <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>Saving…</span>}
+            </div>
+          )}
         </div>
         <GoldButton onClick={() => { setEditingAlbum(null); setShowModal(true) }} icon={<Plus size={15} />}>
           New Album
@@ -494,7 +533,7 @@ function AlbumsPanel() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Cover', 'Album', 'Category', 'Photos', 'Status', 'Actions'].map(h => (
+              {['', 'Cover', 'Album', 'Category', 'Photos', 'Status', 'Actions'].map(h => (
                 <th key={h} style={{
                   textAlign: 'left', fontSize: '0.6rem',
                   letterSpacing: '0.2em', textTransform: 'uppercase',
@@ -505,14 +544,20 @@ function AlbumsPanel() {
             </tr>
           </thead>
           <tbody>
-            {albums.map(album => (
+            {albums.map((album, index) => (
               <AlbumRow
                 key={album.id}
                 album={album}
+                index={index}
+                isDragging={dragIndex === index}
+                isDropTarget={dropIndex === index}
                 onEdit={() => { setEditingAlbum(album); setShowModal(true) }}
                 onDelete={() => handleDelete(album.id, album.title)}
                 onTogglePublish={() => handleTogglePublish(album)}
                 onManagePhotos={() => setShowPhotos(album)}
+                onDragStart={() => handleDragStart(index)}
+                onDragEnter={() => handleDragEnter(index)}
+                onDragEnd={handleDragEnd}
               />
             ))}
           </tbody>
@@ -530,14 +575,25 @@ function AlbumsPanel() {
   )
 }
 
-function AlbumRow({ album, onEdit, onDelete, onTogglePublish, onManagePhotos }: {
+function AlbumRow({
+  album, index, isDragging, isDropTarget,
+  onEdit, onDelete, onTogglePublish, onManagePhotos,
+  onDragStart, onDragEnter, onDragEnd,
+}: {
   album: Album
+  index: number
+  isDragging: boolean
+  isDropTarget: boolean
   onEdit: () => void
   onDelete: () => void
   onTogglePublish: () => void
   onManagePhotos: () => void
+  onDragStart: () => void
+  onDragEnter: () => void
+  onDragEnd: () => void
 }) {
   const [photoCount, setPhotoCount] = useState(0)
+  const [hovered, setHovered] = useState(false)
 
   useEffect(() => {
     supabase.from('photos').select('*', { count: 'exact', head: true })
@@ -546,7 +602,31 @@ function AlbumRow({ album, onEdit, onDelete, onTogglePublish, onManagePhotos }: 
   }, [album.id])
 
   return (
-    <tr style={{ borderBottom: '1px solid rgba(201,169,110,0.06)' }}>
+    <tr
+      draggable
+      onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }}
+      onDragEnter={e => { e.preventDefault(); onDragEnter() }}
+      onDragOver={e => e.preventDefault()}
+      onDragEnd={onDragEnd}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderBottom: '1px solid rgba(201,169,110,0.06)',
+        opacity: isDragging ? 0.35 : 1,
+        background: isDropTarget
+          ? 'rgba(201,169,110,0.07)'
+          : hovered ? 'rgba(255,255,255,0.015)' : 'transparent',
+        outline: isDropTarget ? '1px solid rgba(201,169,110,0.4)' : 'none',
+        transition: 'opacity 0.2s, background 0.15s',
+        cursor: 'grab',
+      }}
+    >
+      {/* Drag handle cell */}
+      <td style={{ padding: '12px 10px 12px 16px', width: '28px' }}>
+        <div style={{ color: hovered ? 'var(--gold)' : 'var(--border)', transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}>
+          <GripVertical size={16} />
+        </div>
+      </td>
       <td style={{ padding: '12px 16px' }}>
         {album.cover_image_url ? (
           <img src={album.cover_image_url} style={{ width: '48px', height: '48px', objectFit: 'cover', display: 'block' }} />
@@ -797,7 +877,10 @@ function AlbumModal({ album, onClose, onSaved }: {
 function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
-  const [dragOver, setDragOver] = useState(false)
+  const [uploadDragOver, setUploadDragOver] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
+  const [reordering, setReordering] = useState(false)
 
   const loadPhotos = async () => {
     const { data } = await supabase.from('photos').select('*').eq('album_id', album.id).order('sort_order')
@@ -837,6 +920,39 @@ function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) 
     loadPhotos()
   }
 
+  // ── Drag-to-reorder handlers ──
+  const handleDragStart = (index: number) => {
+    setDragIndex(index)
+  }
+
+  const handleDragEnter = (index: number) => {
+    if (dragIndex === null || index === dragIndex) return
+    setDropIndex(index)
+  }
+
+  const handleDragEnd = async () => {
+    if (dragIndex === null || dropIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null)
+      setDropIndex(null)
+      return
+    }
+    setReordering(true)
+    const reordered = [...photos]
+    const [moved] = reordered.splice(dragIndex, 1)
+    reordered.splice(dropIndex, 0, moved)
+    setPhotos(reordered)
+    setDragIndex(null)
+    setDropIndex(null)
+
+    // Batch update sort_order in Supabase
+    await Promise.all(
+      reordered.map((p, idx) =>
+        supabase.from('photos').update({ sort_order: idx }).eq('id', p.id)
+      )
+    )
+    setReordering(false)
+  }
+
   return (
     <div>
       <button
@@ -854,28 +970,37 @@ function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) 
         ← Back to Albums
       </button>
 
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: 'var(--cream)', marginBottom: '4px' }}>
-          {album.title}
-        </h2>
-        <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-          {photos.length} photo{photos.length !== 1 ? 's' : ''} in this album
+      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: 'var(--cream)', marginBottom: '4px' }}>
+            {album.title}
+          </h2>
+          <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+            {photos.length} photo{photos.length !== 1 ? 's' : ''} in this album
+          </div>
         </div>
+        {photos.length > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.68rem', color: 'var(--muted)', letterSpacing: '0.1em' }}>
+            <GripVertical size={13} color="var(--gold)" />
+            Drag photos to reorder
+            {reordering && <span style={{ color: 'var(--gold)', marginLeft: '6px' }}>Saving…</span>}
+          </div>
+        )}
       </div>
 
       <label
-        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
+        onDragOver={e => { e.preventDefault(); setUploadDragOver(true) }}
+        onDragLeave={() => setUploadDragOver(false)}
+        onDrop={e => { e.preventDefault(); setUploadDragOver(false); handleFiles(e.dataTransfer.files) }}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: '12px', padding: '40px',
-          border: `2px dashed ${dragOver ? 'var(--gold)' : 'var(--border)'}`,
-          background: dragOver ? 'rgba(201,169,110,0.04)' : 'transparent',
+          border: `2px dashed ${uploadDragOver ? 'var(--gold)' : 'var(--border)'}`,
+          background: uploadDragOver ? 'rgba(201,169,110,0.04)' : 'transparent',
           cursor: 'pointer', marginBottom: '24px', transition: 'all 0.3s',
         }}
       >
-        <Upload size={28} color={dragOver ? 'var(--gold)' : 'var(--muted)'} />
+        <Upload size={28} color={uploadDragOver ? 'var(--gold)' : 'var(--muted)'} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--cream)', marginBottom: '4px' }}>
             Click to upload or drag & drop photos
@@ -904,8 +1029,18 @@ function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) 
         <EmptyState message="No photos yet. Upload some photos above!" />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '8px' }}>
-          {photos.map(photo => (
-            <PhotoThumb key={photo.id} photo={photo} onDelete={() => handleDelete(photo)} />
+          {photos.map((photo, index) => (
+            <PhotoThumb
+              key={photo.id}
+              photo={photo}
+              index={index}
+              isDragging={dragIndex === index}
+              isDropTarget={dropIndex === index}
+              onDelete={() => handleDelete(photo)}
+              onDragStart={() => handleDragStart(index)}
+              onDragEnter={() => handleDragEnter(index)}
+              onDragEnd={handleDragEnd}
+            />
           ))}
         </div>
       )}
@@ -913,21 +1048,77 @@ function PhotosManager({ album, onBack }: { album: Album; onBack: () => void }) 
   )
 }
 
-function PhotoThumb({ photo, onDelete }: { photo: Photo; onDelete: () => void }) {
+function PhotoThumb({
+  photo, index, isDragging, isDropTarget, onDelete, onDragStart, onDragEnter, onDragEnd,
+}: {
+  photo: Photo
+  index: number
+  isDragging: boolean
+  isDropTarget: boolean
+  onDelete: () => void
+  onDragStart: () => void
+  onDragEnter: () => void
+  onDragEnd: () => void
+}) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
+      draggable
+      onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }}
+      onDragEnter={e => { e.preventDefault(); onDragEnter() }}
+      onDragOver={e => e.preventDefault()}
+      onDragEnd={onDragEnd}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden', background: 'var(--charcoal)' }}
+      style={{
+        position: 'relative',
+        aspectRatio: '1',
+        overflow: 'hidden',
+        background: 'var(--charcoal)',
+        cursor: 'grab',
+        opacity: isDragging ? 0.35 : 1,
+        outline: isDropTarget ? '2px solid var(--gold)' : 'none',
+        outlineOffset: '-2px',
+        transition: 'opacity 0.2s, outline 0.15s',
+        userSelect: 'none',
+      }}
     >
-      <img src={photo.thumbnail_url || photo.url} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s', transform: hovered ? 'scale(1.05)' : 'scale(1)' }} loading="lazy" />
-      {hovered && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <button onClick={onDelete} style={{ background: 'rgba(224,112,112,0.9)', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Trash2 size={15} />
+      <img
+        src={photo.thumbnail_url || photo.url}
+        style={{
+          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+          transition: 'transform 0.3s',
+          transform: hovered && !isDragging ? 'scale(1.05)' : 'scale(1)',
+          pointerEvents: 'none',
+        }}
+        loading="lazy"
+        draggable={false}
+      />
+      {/* Drag handle — always shown top-left on hover */}
+      {hovered && !isDragging && (
+        <div style={{
+          position: 'absolute', top: '6px', left: '6px',
+          background: 'rgba(14,12,10,0.75)', borderRadius: '4px',
+          padding: '3px 4px', display: 'flex', alignItems: 'center',
+          color: 'var(--gold)', pointerEvents: 'none',
+        }}>
+          <GripVertical size={13} />
+        </div>
+      )}
+      {/* Delete overlay */}
+      {hovered && !isDragging && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(14,12,10,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '10px' }}>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            style={{ background: 'rgba(224,112,112,0.9)', border: 'none', color: 'white', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Trash2 size={14} />
           </button>
         </div>
+      )}
+      {/* Drop indicator bar at top */}
+      {isDropTarget && (
+        <div style={{ position: 'absolute', inset: 0, border: '2px solid var(--gold)', pointerEvents: 'none', zIndex: 2 }} />
       )}
     </div>
   )
