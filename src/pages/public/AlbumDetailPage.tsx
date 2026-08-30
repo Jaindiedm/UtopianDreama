@@ -12,7 +12,7 @@ export default function AlbumDetailPage() {
   const navigate = useNavigate()
   const { album, photos, loading } = useAlbum(slug || '')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const [heroBanner, setHeroBanner] = useState<string | null>(null)
+  const [heroBannerData, setHeroBannerData] = useState<any>(null)
 
   useEffect(() => {
     if (album?.id) {
@@ -20,7 +20,7 @@ export default function AlbumDetailPage() {
         if (data?.value) {
           try {
             const dict = JSON.parse(data.value)
-            if (dict[album.id]) setHeroBanner(dict[album.id])
+            if (dict[album.id]) setHeroBannerData(dict[album.id])
           } catch (e) {}
         }
       })
@@ -58,6 +58,20 @@ export default function AlbumDetailPage() {
   if (loading) return <LoadingState />
   if (!album) return <NotFoundState onBack={() => navigate('/')} />
 
+  let bannerUrl = ''
+  let bannerPosY = 50
+
+  if (typeof heroBannerData === 'string') {
+    bannerUrl = heroBannerData
+  } else if (heroBannerData && typeof heroBannerData === 'object') {
+    bannerUrl = heroBannerData.url || ''
+    if (heroBannerData.positionY !== undefined) {
+      bannerPosY = Number(heroBannerData.positionY)
+    }
+  }
+
+  const finalHeroImage = bannerUrl || album.cover_image_url
+
   const formattedDate = album.event_date
     ? new Date(album.event_date).toLocaleDateString('en-GB', {
       month: 'long', year: 'numeric'
@@ -80,14 +94,15 @@ export default function AlbumDetailPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {heroBanner || album.cover_image_url ? (
+        {finalHeroImage ? (
           <img
-            src={heroBanner || album.cover_image_url}
+            src={finalHeroImage}
             alt={album.title}
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              objectPosition: `center ${bannerPosY}%`,
             }}
           />
         ) : (

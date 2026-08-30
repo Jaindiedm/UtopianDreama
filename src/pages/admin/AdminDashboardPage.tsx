@@ -676,7 +676,8 @@ function AlbumModal({ album, onClose, onSaved }: {
   const [coverPreview, setCoverPreview] = useState(album?.cover_image_url || '')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState('')
-  const [siteBanners, setSiteBanners] = useState<Record<string, string>>({})
+  const [bannerPosY, setBannerPosY] = useState<number>(50)
+  const [siteBanners, setSiteBanners] = useState<Record<string, any>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -687,7 +688,14 @@ function AlbumModal({ album, onClose, onSaved }: {
           const dict = JSON.parse(data.value)
           setSiteBanners(dict)
           if (album?.id && dict[album.id]) {
-            setBannerPreview(dict[album.id])
+            const item = dict[album.id]
+            if (typeof item === 'string') {
+              setBannerPreview(item)
+              setBannerPosY(50)
+            } else if (item && typeof item === 'object') {
+              setBannerPreview(item.url || '')
+              setBannerPosY(item.positionY !== undefined ? Number(item.positionY) : 50)
+            }
           }
         } catch (e) {}
       }
@@ -737,21 +745,34 @@ function AlbumModal({ album, onClose, onSaved }: {
     }
 
     if (createdAlbumId) {
-      if (!bannerPreview && siteBanners[createdAlbumId]) {
-        const nextBanners = { ...siteBanners }
-        delete nextBanners[createdAlbumId]
-        await supabase.from('site_settings').upsert({ key: 'album_banners', value: JSON.stringify(nextBanners), updated_at: new Date().toISOString() }, { onConflict: 'key' })
-      } else if (bannerFile) {
+      let finalBannerUrl = bannerPreview
+      if (bannerFile) {
         try {
           const res = await uploadImage(bannerFile)
-          const nextBanners = { ...siteBanners, [createdAlbumId]: res.url }
-          await supabase.from('site_settings').upsert({ key: 'album_banners', value: JSON.stringify(nextBanners), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+          finalBannerUrl = res.url
         } catch (e) {
           setError('Banner image upload failed.')
           setSaving(false)
           return
         }
       }
+
+      const nextBanners = { ...siteBanners }
+
+      if (finalBannerUrl || bannerPosY !== 50) {
+        nextBanners[createdAlbumId] = {
+          url: finalBannerUrl,
+          positionY: bannerPosY
+        }
+      } else {
+        delete nextBanners[createdAlbumId]
+      }
+
+      await supabase.from('site_settings').upsert({
+        key: 'album_banners',
+        value: JSON.stringify(nextBanners),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' })
     }
 
     onSaved()
@@ -832,7 +853,9 @@ function AlbumModal({ album, onClose, onSaved }: {
       </div>
 
       <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>Hero Banner Image <span style={{ textTransform: 'none', letterSpacing: 'normal', color: 'var(--muted-dark)', opacity: 0.7 }}>(Optional - defaults to cover)</span></div>
+        <div style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>
+          Hero Banner Image <span style={{ textTransform: 'none', letterSpacing: 'normal', color: 'var(--muted)', opacity: 0.7 }}>(Optional - defaults to cover)</span>
+        </div>
         {bannerPreview && (
           <div style={{ marginBottom: '12px', position: 'relative', display: 'inline-block' }}>
             <img src={bannerPreview} style={{ height: '80px', width: '100%', objectFit: 'cover', display: 'block', border: '1px solid var(--border)' }} />
@@ -845,7 +868,7 @@ function AlbumModal({ album, onClose, onSaved }: {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: '8px', padding: '16px', border: '2px dashed var(--border)',
           cursor: 'pointer', fontSize: '0.75rem', color: 'var(--muted)',
-          transition: 'all 0.3s', letterSpacing: '0.1em',
+          transition: 'all 0.3s', letterSpacing: '0.1em', marginBottom: '16px',
         }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
@@ -857,6 +880,100 @@ function AlbumModal({ album, onClose, onSaved }: {
             if (file) { setBannerFile(file); setBannerPreview(URL.createObjectURL(file)) }
           }} />
         </label>
+
+        {/* Live Preview and Position Adjustment Controls */}
+        {(bannerPreview || coverPreview) && (
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', border: '1px solid var(--border)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)' }}>
+                Hero Banner Focal Point (Vertical Alignment)
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--cream)', fontFamily: 'monospace' }}>
+                {bannerPosY}% {bannerPosY === 0 ? '(Top)' : bannerPosY === 50 ? '(Center)' : bannerPosY === 100 ? '(Bottom)' : ''}
+              </div>
+            </div>
+
+            {/* Widescreen Hero Banner Live Preview Box */}
+            <div style={{
+              width: '100%',
+              height: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              border: '1px solid var(--border)',
+              borderRadius: '2px',
+              marginBottom: '14px',
+              background: '#0a0a0a',
+            }}>
+              <img
+                src={bannerPreview || coverPreview}
+                alt="Hero Banner Preview"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: `center ${bannerPosY}%`,
+                  transition: 'object-position 0.1s linear',
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to bottom, rgba(14,12,10,0.2) 0%, rgba(14,12,10,0.7) 100%)',
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'flex-end',
+                padding: '12px 16px',
+              }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                  Hero Framing Preview
+                </span>
+              </div>
+            </div>
+
+            {/* Range Slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.65rem', color: 'var(--muted)', width: '35px' }}>Top</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={bannerPosY}
+                onChange={e => setBannerPosY(Number(e.target.value))}
+                style={{ flex: 1, accentColor: 'var(--gold)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.65rem', color: 'var(--muted)', width: '45px', textAlign: 'right' }}>Bottom</span>
+            </div>
+
+            {/* Alignment Quick Presets */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { label: 'Top (0%)', val: 0 },
+                { label: 'Center (50%)', val: 50 },
+                { label: 'Bottom (100%)', val: 100 },
+              ].map(preset => (
+                <button
+                  key={preset.val}
+                  type="button"
+                  onClick={() => setBannerPosY(preset.val)}
+                  style={{
+                    flex: 1,
+                    background: bannerPosY === preset.val ? 'var(--gold)' : 'transparent',
+                    color: bannerPosY === preset.val ? 'var(--dark)' : 'var(--muted)',
+                    border: `1px solid ${bannerPosY === preset.val ? 'var(--gold)' : 'var(--border)'}`,
+                    padding: '6px 10px',
+                    fontSize: '0.62rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <ErrorMessage message={error} />}
